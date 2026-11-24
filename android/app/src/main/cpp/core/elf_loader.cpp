@@ -215,7 +215,7 @@ bool elf_load(const char* path, GuestImage& img) {
 
     // Copy PT_LOAD file data into the mapping (slid).
     for (const auto& ph : phdrs) {
-        if (ph.p_type != PT_LOAD || ph.p_filesz == 0) continue;
+        if (ph.p_type != PT_LOAD || ph.p_filesz == 0 || (ph.p_flags & PF_X)) continue;
         uint8_t* dst = (uint8_t*)(uintptr_t)(ph.p_vaddr + delta);
         off_t done = 0;
         while (done < (off_t)ph.p_filesz) {
@@ -239,7 +239,7 @@ bool elf_load(const char* path, GuestImage& img) {
     size_t fixed = 0;
     if (delta != 0) {
         for (const auto& ph : phdrs) {
-            if (ph.p_type != PT_LOAD || ph.p_filesz == 0) continue;
+            if (ph.p_type != PT_LOAD || ph.p_filesz == 0 || (ph.p_flags & PF_X)) continue;
             uint64_t* w = (uint64_t*)(uintptr_t)(ph.p_vaddr + delta);
             const size_t words = ph.p_filesz / sizeof(uint64_t);
             for (size_t i = 0; i < words; ++i) {
@@ -298,7 +298,7 @@ bool elf_load(const char* path, GuestImage& img) {
                 }
                 const char* name = strtab + symtab[ELF64_R_SYM(r->r_info)].st_name;
                 void* addr = find_guest_symbol(name);
-                if (addr == nullptr && find_import(name) &&
+                if (addr == nullptr) loge("unresolved symbol: %s", name); if (addr == nullptr && find_import(name) &&
                     find_import(name)->kind != SymKind::Weak0) {
                     loge("cannot resolve guest import: %s", name);
                     ok = false;

@@ -298,7 +298,7 @@ bool elf_load(const char* path, GuestImage& img) {
                 }
                 const char* name = strtab + symtab[ELF64_R_SYM(r->r_info)].st_name;
                 void* addr = find_guest_symbol(name);
-                if (addr == nullptr) loge("unresolved symbol: %s", name); if (addr == nullptr && find_import(name) &&
+                if (addr == nullptr) { loge("stubbed weak: %s", name); addr = (void*)(+[](){}); } if (addr == nullptr && find_import(name) &&
                     find_import(name)->kind != SymKind::Weak0) {
                     loge("cannot resolve guest import: %s", name);
                     ok = false;

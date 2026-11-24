@@ -183,7 +183,6 @@ void* guest_mmap(void* addr, size_t len, int prot, int flags, int fd, off_t off)
 // thread's testGuestMemory commits its ranges through this exact path fine, yet
 // ~1 ms later the boot worker's commit throws "Guest commit failed" on the
 }
-}
 // first mprotect of a fresh 4 GiB window. The guest discards errno, so the
 // kernel's answer was invisible. Wrap it: log addr/len/prot + errno + the
 // overlapping /proc/self/maps lines, and for ranges inside the flat guest

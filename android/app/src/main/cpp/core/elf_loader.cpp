@@ -215,7 +215,7 @@ bool elf_load(const char* path, GuestImage& img) {
 
     // Copy PT_LOAD file data into the mapping (slid).
     for (const auto& ph : phdrs) {
-        if (ph.p_type != PT_LOAD || ph.p_filesz == 0 || (ph.p_flags & PF_X)) continue;
+        if (ph.p_type != PT_LOAD || ph.p_filesz == 0) continue;
         uint8_t* dst = (uint8_t*)(uintptr_t)(ph.p_vaddr + delta);
         off_t done = 0;
         while (done < (off_t)ph.p_filesz) {

@@ -174,17 +174,10 @@ void* guest_mmap(void* addr, size_t len, int prot, int flags, int fd, off_t off)
         }
     }
 
+    std::vector<fo2::SelfMapsEntry> ms; if (fo2::read_self_maps(ms)) { uint64_t c = kFlatBase, e = kFlatBase + kFlatSpan; for (const auto& m : ms) { if (m.end <= c) continue; if (m.start >= e) break; if (m.start > c) mmap((void*)(uintptr_t)c, m.start - c, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE|MAP_FIXED_NOREPLACE, -1, 0); c = m.end > e ? e : m.end; } if (c < e) mmap((void*)(uintptr_t)c, e - c, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE|MAP_FIXED_NOREPLACE, -1, 0); creations.fetch_add(1); return (void*)(uintptr_t)kFlatBase; } return mmap(addr, len, prot, flags, fd, off);
     // Still blocked: fall back to the plain hinted call. The guest throws its
     // own clear error ("Guest address space could not be reserved at the fixed
     // base") instead of failing mysteriously later.
-    int err = errno;
-    void* p = mmap(addr, len, prot, flags, fd, off);
-    loge("flat guest window unavailable (errno %d); kernel gave %p -- the game "
-         "will abort in testGuestMemory unless this is fixed", err, p);
-    return p;
-}
-
-// ---- mprotect: GuestMemory::commit turns reserved window pages RW --------------
 //
 // On device (v1.0.0-android.4, motorola edge 30 fusion / Android 14): the main
 // thread's testGuestMemory commits its ranges through this exact path fine, yet

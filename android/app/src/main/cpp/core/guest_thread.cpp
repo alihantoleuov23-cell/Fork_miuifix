@@ -12,6 +12,8 @@
 #include <elf.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <signal.h>
+#include <ucontext.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/auxv.h>
@@ -226,7 +228,8 @@ void* build_initial_stack(size_t stack_size) {
     return sp;
 }
 
-void* guest_main(void*) {
+static void crash_hdl(int s, siginfo_t* i, void* c) { auto* u = (ucontext_t*)c; loge("CRASH sig=%d addr=0x%llx pc=0x%llx lr=0x%llx", s, (unsigned long long)(uintptr_t)i->si_addr, (unsigned long long)u->uc_mcontext.pc, (unsigned long long)u->uc_mcontext.regs[30]); _exit(1); }
+void* guest_main(void*) { struct sigaction sa{}; sa.sa_sigaction = crash_hdl; sa.sa_flags = SA_SIGINFO; sigaction(SIGSEGV, &sa, nullptr); sigaction(SIGILL, &sa, nullptr); sigaction(SIGABRT, &sa, nullptr);
     GuestTcb* tcb = (GuestTcb*)tp_get();  // created by guest_trampoline
 
     // Run the guest's constructors (glibc calls INIT_ARRAY before main).
